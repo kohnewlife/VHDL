@@ -27,7 +27,7 @@ BEGIN
 			RegWrite <= '1';
 			MemtoReg <= '0';
 			
-			CASE funct IS -- Jump or not
+			CASE funct IS		-- Jump or not
 				WHEN X"08" =>		--jr
 					Jump <= '1';
 					jal <= --
@@ -38,7 +38,7 @@ BEGIN
 					Jr <= '0';
 			END CASE;
 			
-			CASE funct IS --ALUControl
+			CASE funct IS		-- ALUControl
 				WHEN X"20" =>		--add
 					ALUControl <= 
 				WHEN X"21" =>		--addu
