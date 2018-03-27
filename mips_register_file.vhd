@@ -23,9 +23,11 @@ BEGIN
 	PROCESS( reset, clock )
 	BEGIN
 		IF( reset = '0' ) THEN
-		
+			FOR i IN 0 to 31 LOOP 
+				registers(i) = X"00000000";
+			END LOOP;
 		ELSIF( RISING_EDGE( clock ) ) THEN
-		
+			registers(CONV_INTEGER(write_reg)) <= write_data;
 		END IF;
 	END PROCESS;
 END arch;
