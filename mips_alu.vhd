@@ -17,46 +17,32 @@ BEGIN
 	PROCESS(ALUControl, inputA, inputB, shamt)
 	BEGIN
 		CASE ALUControl IS
-			WHEN X"0" =>		-- add
-				result <= inputA + inputB;
-			WHEN X"1" =>		-- sub
-				result <= inputA - inputB;
-			WHEN X"2" =>		-- increment
-				result <= inputA + X"00000001";
-			WHEN X"3" =>		-- decrement
-				result <= inputA - X"00000001";
-			WHEN X"4" =>		-- 1's complement
-				result <= NOT inputA;
-			WHEN X"5" =>		-- and
+			WHEN "0000" =>		-- and
 				result <= inputA AND inputB;
-			WHEN X"6" =>		-- or
+			WHEN "0001" =>		-- or
 				result <= inputA OR inputB;
-			WHEN X"7" =>		-- nor
-				result <= inputA NOR inputB;
-			WHEN X"8" =>		-- xor
-				result <= inputA XOR inputB;
-			WHEN X"9" =>		-- slt
+			WHEN "0010" =>		-- add
+				result <= inputA + inputB;
+			WHEN "0110" =>		-- subtract
+				result <= inputA - inputB;
+			WHEN "0111" =>		-- slt
 				IF (inputA < inputB) THEN
 					result <= X"00000001";
 				ELSE 
 					result <= X"00000000";
 				END IF;
-			WHEN X"A" =>		-- sltu
-				IF (inputA < inputB) THEN
-					result <= X"00000001";
-				ELSE 
-					result <= X"00000000";
-				END IF;
-			WHEN X"B" =>		-- sll
+			WHEN "1000" =>		-- sll
 				result <= inputB << shamt;
-			WHEN X"C" =>		-- sllv
-				result <= inputB << inputA;
-			WHEN X"D" =>		-- srl
+			WHEN "1001" =>		-- srl
 				result <= inputB >> shamt;
-			WHEN X"E" =>		-- srlv
+			WHEN "1010" =>		-- sllv
+				result <= inputB << inputA;
+			WHEN "1011" =>		-- srlv
 				result <= inputB >> inputA;
-			WHEN X"F" =>		
-				-- TODO: fix this
+			WHEN "1100" =>		
+				result <= inputA NOR inputB;
+			WHEN "1101" =>		
+				result <= inputA << 16;
 			WHEN OTHERS => NULL;
 		END CASE;
 	END PROCESS;
