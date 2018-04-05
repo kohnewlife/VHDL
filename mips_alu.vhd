@@ -1,6 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL; 
 
 ENTITY mips_alu IS
 	PORT(	ALUControl			: IN	STD_LOGIC_VECTOR( 3 DOWNTO 0);
@@ -32,26 +33,26 @@ BEGIN
 					result <= X"00000000";
 				END IF;
 			WHEN "1000" =>		-- sll
-				result <= inputB << shamt;
+				result <= conv_std_logic_vector((CONV_INTEGER( inputB ) * (2 * CONV_INTEGER( shamt ))) , 32);
 			WHEN "1001" =>		-- srl
-				result <= inputB >> shamt;
+				result <= conv_std_logic_vector((CONV_INTEGER( inputB ) / (2 * CONV_INTEGER( shamt ))) , 32);
 			WHEN "1010" =>		-- sllv
-				result <= inputB << inputA;
+				result <= conv_std_logic_vector((CONV_INTEGER( inputB ) * (2 * CONV_INTEGER( inputA ))) , 32);
 			WHEN "1011" =>		-- srlv
-				result <= inputB >> inputA;
-			WHEN "1100" =>		
+				result <= conv_std_logic_vector((CONV_INTEGER( inputB ) / (2 * CONV_INTEGER( inputA ))) , 32);
+			WHEN "1100" =>		-- nor
 				result <= inputA NOR inputB;
-			WHEN "1101" =>		
-				result <= inputA << 16;
+			WHEN "1101" =>		-- Lui
+				result <= conv_std_logic_vector((CONV_INTEGER( inputA ) * 65536) , 32);
 			WHEN OTHERS => NULL;
 		END CASE;
+		IF (result = X"00000000") THEN
+			Zero <= '1';
+		ELSE
+			Zero <= '0';
+		END IF;
 	END PROCESS;
 	-- Zero
-	IF (result = X"00000000") THEN
-		Zero <= '1';
-	ELSE
-		Zero <= '0';
-	END IF;
 	ALU_Result <= result;
 END arch;
 				

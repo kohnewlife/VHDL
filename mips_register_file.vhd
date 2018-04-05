@@ -13,10 +13,10 @@ END mips_register_file;
 ARCHITECTURE arch OF mips_register_file IS
 
 	TYPE REG_TYPE IS ARRAY (0 TO 31) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
+	SIGNAL testing : STD_LOGIC_VECTOR(31 DOWNTO 0);
 	SIGNAL registers : REG_TYPE;
 	
 BEGIN
-
 	read_data1 <= registers( CONV_INTEGER( read_reg1 ) );
 	read_data2 <= registers( CONV_INTEGER( read_reg2 ) );
 	
@@ -24,10 +24,14 @@ BEGIN
 	BEGIN
 		IF( reset = '0' ) THEN
 			FOR i IN 0 to 31 LOOP 
-				registers(i) = X"00000000";
+				registers(i) <= X"00000000";
 			END LOOP;
-		ELSIF( RISING_EDGE( clock ) ) THEN
-			registers(CONV_INTEGER(write_reg)) <= write_data;
+		ELSIF( RISING_EDGE( clock )) THEN
+			IF ( RegWrite = '1' ) THEN
+				testing <= write_data;
+			END IF;
 		END IF;
+		registers(CONV_INTEGER(write_reg)) <= testing;
+
 	END PROCESS;
 END arch;
