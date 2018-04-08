@@ -8,14 +8,12 @@ ENTITY mips IS
 			Write_data_out							:	OUT STD_LOGIC_VECTOR(31 DOWNTO 0));
 END mips;
 
-ARCHITECTURE arc OF signExtImmediate IS
-	SIGNAL leading	: STD_LOGIC_VECTOR ( 15 DOWNTO 0 );
+ARCHITECTURE arc OF mips IS
+	SIGNAL rom2op, rom2funct						: STD_LOGIC_VECTOR ( 5 DOWNTO 0 );		-- rom to opcode
+	SIGNAL rom2rr1, rom2rr2, rom2wr, rom2sh			: STD_LOGIC_VECTOR ( 4 DOWNTO 0 );		-- rom to read_reg1, read_reg2, write_reg
+	SIGNAL rom2imme									: STD_LOGIC_VECTOR ( 15 DOWNTO 0 );
+	
 	BEGIN
-	COMPONENT lab7 					PORT (	INBUS : IN STD_LOGIC_VECTOR(31 downTO 0);
-														clk, reset	: IN STD_LOGIC;
-														OUTBUS  : OUT STD_LOGIC_VECTOR(31 downTO 0));
-														END COMPONENT;
-														
 	COMPONENT clk_div 				PORT (	clock_48Mhz					: IN	STD_LOGIC;
 														clock_1MHz					: OUT	STD_LOGIC;
 														clock_100KHz				: OUT	STD_LOGIC;
@@ -25,6 +23,16 @@ ARCHITECTURE arc OF signExtImmediate IS
 														clock_10Hz					: OUT	STD_LOGIC;
 														clock_1Hz					: OUT	STD_LOGIC);
 														END COMPONENT;
+														
+	COMPONENT counter 				PORT (	INBUS : IN STD_LOGIC_VECTOR(31 downTO 0);
+														clk, reset	: IN STD_LOGIC;
+														OUTBUS  : OUT STD_LOGIC_VECTOR(31 downTO 0));
+														END COMPONENT;
+	
+	COMPONENT rom								PORT (	address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
+														clock							: IN STD_LOGIC  := '1';
+														q								: OUT STD_LOGIC_VECTOR (31 DOWNTO 0) );
+														END COMPONENT;	
 														
 	COMPONENT mipsControl			PORT (	opcode						:	IN	STD_LOGIC_VECTOR(5 DOWNTO 0);
 														funct							:	IN STD_LOGIC_VECTOR(5 DOWNTO 0);
@@ -43,35 +51,54 @@ ARCHITECTURE arc OF signExtImmediate IS
 														read_data1, read_data2  : OUT	STD_LOGIC_VECTOR(31 DOWNTO 0) );
 														END COMPONENT;
 														
-	COMPONENT signExtImmediate 	PORT ( 	input							: IN STD_LOGIC_VECTOR ( 15 DOWNTO 0 );
+	COMPONENT signExtImmediate 					PORT ( 	input							: IN STD_LOGIC_VECTOR ( 15 DOWNTO 0 );
 														output 						: OUT STD_LOGIC_VECTOR ( 31 DOWNTO 0 ) );
 														END COMPONENT;
 														
-	COMPONENT mips_alu 				PORT (	ALUControl					: IN	STD_LOGIC_VECTOR( 3 DOWNTO 0);
+	COMPONENT mips_alu 							PORT (	ALUControl					: IN	STD_LOGIC_VECTOR( 3 DOWNTO 0);
 														inputA, inputB				: IN	STD_LOGIC_VECTOR(31 DOWNTO 0);
 														shamt							: IN	STD_LOGIC_VECTOR( 4 DOWNTO 0);
 														Zero							: OUT	STD_LOGIC;
 														ALU_Result  				: OUT	STD_LOGIC_VECTOR(31 DOWNTO 0) );
 														END COMPONENT;
 
-	COMPONENT ram 						PORT (	address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
+	COMPONENT ram 								PORT (	address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
 														clock							: IN STD_LOGIC  := '1';
 														data							: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 														wren							: IN STD_LOGIC ;
 														q								: OUT STD_LOGIC_VECTOR (31 DOWNTO 0) );
 														END COMPONENT;												
-
-	COMPONENT rom						PORT (	address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
-														clock							: IN STD_LOGIC  := '1';
-														q								: OUT STD_LOGIC_VECTOR (31 DOWNTO 0) );
-														END COMPONENT;		
+	
 	BEGIN 	
 	
-	U1 : mux21 PORT MAP(a0 => a_input,
-		 a1 => b_input,
-		 s0 => sel(0),
-		 y => temp0);
-	END signExtImmediate
+	--U1 : counter 							PORT MAP (	output => address -- how to specify the rom one
+													 --);
+													 
+	U2	:	rom								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
+														q(25 DOWNTO 21) => rom2rr1,
+														q(20 DOWNTO 16) => rom2rr2,
+														q(15 DOWNTO 0) => rom2imme,
+														q(15 DOWNTO 11) => rom2wr,		-- TODO: determine whether rt or rt goes to write register
+														q(10 DOWNTO 6) => rom2sh, 		-- goes to shamt????
+														q(5 DOWNTO 0) => rom2funct);
+														
+	U3	:	mipsControl						PORT MAP (	opcode => rom2op, 
+														funct => rom2funct );
+
+	U4	:	mips_register_file								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
+														q(25 DOWNTO 21) => );
+
+	U5	:	signExtImmediate				PORT MAP (	input => rom2imme, 
+														q(25 DOWNTO 21) => );
+
+	U6	:	mips_alu								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
+														shamt => rom2sh);
+	
+	U7	:	ram								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
+														q(25 DOWNTO 21) => );
+														
+	END mips
+	
 BEGIN
 	PROCESS ( input, leading )
 		BEGIN
