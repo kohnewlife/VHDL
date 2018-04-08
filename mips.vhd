@@ -9,9 +9,13 @@ ENTITY mips IS
 END mips;
 
 ARCHITECTURE arc OF mips IS
+	SIGNAL pc2rom, alu2ram							: STD_LOGIC_VECTOR ( 11 DOWNTO 0 );		-- TODO: Is it exactly 12 bits?
 	SIGNAL rom2op, rom2funct						: STD_LOGIC_VECTOR ( 5 DOWNTO 0 );		-- rom to opcode
 	SIGNAL rom2rr1, rom2rr2, rom2wr, rom2sh			: STD_LOGIC_VECTOR ( 4 DOWNTO 0 );		-- rom to read_reg1, read_reg2, write_reg
 	SIGNAL rom2imme									: STD_LOGIC_VECTOR ( 15 DOWNTO 0 );
+	SIGNAL reg2ip1, reg2ip2							: STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+	SIGNAL ALUOp									: STD_LOGIC_VECTOR ( 3 DOWNTO 0 );
+	
 	
 	BEGIN
 	COMPONENT clk_div 				PORT (	clock_48Mhz					: IN	STD_LOGIC;
@@ -84,7 +88,7 @@ ARCHITECTURE arc OF mips IS
 														q(20 DOWNTO 16) => rom2rr2,
 														q(15 DOWNTO 0) => rom2imme,
 														q(15 DOWNTO 11) => rom2wr,		-- TODO: determine whether rt or rt goes to write register
-														q(10 DOWNTO 6) => rom2sh, 		-- goes to shamt????
+														q(10 DOWNTO 6) => rom2sh, 		-- TODO: goes to shamt????
 														q(5 DOWNTO 0) => rom2funct
 													);
 														
@@ -101,7 +105,7 @@ ARCHITECTURE arc OF mips IS
 														MemWrite =>,
 														RegWrite =>,
 														MemtoReg =>,
-														ALUControl =>);
+														ALUControl => ALUOp);
 
 	U4	:	mips_register_file				PORT MAP (	clock =>, 
 														reset =>,
@@ -110,20 +114,20 @@ ARCHITECTURE arc OF mips IS
 														read_reg2 => rom2rr2,
 														write_reg => rom2wr,		-- TODO: determine rt or rd
 														write_data =>,
-														read_data1 =>,
-														read_data2 =>);
+														read_data1 => reg2ip1,
+														read_data2 => reg2ip2);		-- TODO: read_data2 or immediate??
 
 	U5	:	signExtImmediate				PORT MAP (	input => rom2imme, 
 														output => );
 
-	U6	:	mips_alu						PORT MAP (	ALUControl =>, 
-														inputA =>,
-														inputB =>,
+	U6	:	mips_alu						PORT MAP (	ALUControl => ALUOp, 
+														inputA => reg2ip1,
+														inputB => reg2ip2,
 														shamt => rom2sh
 														Zero =>,
 														ALU_Result =>);
 	
-	U7	:	ram								PORT MAP (	address =>, 
+	U7	:	ram								PORT MAP (	address => alu2ram, 
 														clock =>,
 														data =>,
 														wren =>,
