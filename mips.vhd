@@ -24,7 +24,7 @@ ARCHITECTURE arc OF mips IS
 														clock_1Hz					: OUT	STD_LOGIC);
 														END COMPONENT;
 														
-	COMPONENT counter 				PORT (	INBUS : IN STD_LOGIC_VECTOR(31 downTO 0);
+	COMPONENT counter 							PORT (	INBUS : IN STD_LOGIC_VECTOR(31 downTO 0);
 														clk, reset	: IN STD_LOGIC;
 														OUTBUS  : OUT STD_LOGIC_VECTOR(31 downTO 0));
 														END COMPONENT;
@@ -34,7 +34,7 @@ ARCHITECTURE arc OF mips IS
 														q								: OUT STD_LOGIC_VECTOR (31 DOWNTO 0) );
 														END COMPONENT;	
 														
-	COMPONENT mipsControl			PORT (	opcode						:	IN	STD_LOGIC_VECTOR(5 DOWNTO 0);
+	COMPONENT mipsControl						PORT (	opcode						:	IN	STD_LOGIC_VECTOR(5 DOWNTO 0);
 														funct							:	IN STD_LOGIC_VECTOR(5 DOWNTO 0);
 														RegDst, ALUSrc				:	OUT STD_LOGIC;
 														Jump, jal, Jr				:	OUT STD_LOGIC;
@@ -44,7 +44,7 @@ ARCHITECTURE arc OF mips IS
 														ALUControl					:  OUT STD_LOGIC_VECTOR(3 DOWNTO 0)	);
 														END COMPONENT;
 													
-	COMPONENT mips_register_file	PORT (	clock, reset, RegWrite	: IN	STD_LOGIC;
+	COMPONENT mips_register_file				PORT (	clock, reset, RegWrite	: IN	STD_LOGIC;
 														read_reg1, read_reg2		: IN	STD_LOGIC_VECTOR( 4 DOWNTO 0);
 														write_reg					: IN	STD_LOGIC_VECTOR( 4 DOWNTO 0);
 														write_data					: IN	STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -71,31 +71,63 @@ ARCHITECTURE arc OF mips IS
 	
 	BEGIN 	
 	
-	--U1 : counter 							PORT MAP (	output => address -- how to specify the rom one
-													 --);
+	U1 : counter 							PORT MAP (	INBUS => ??? -- how to specify the rom one
+														clk =>,
+														reset =>,
+														OUTBUS =>,
+													);
 													 
-	U2	:	rom								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
+	U2	:	rom								PORT MAP (	address =>
+														clock =>
+														q(31 DOWNTO 26) => rom2op, 
 														q(25 DOWNTO 21) => rom2rr1,
 														q(20 DOWNTO 16) => rom2rr2,
 														q(15 DOWNTO 0) => rom2imme,
 														q(15 DOWNTO 11) => rom2wr,		-- TODO: determine whether rt or rt goes to write register
 														q(10 DOWNTO 6) => rom2sh, 		-- goes to shamt????
-														q(5 DOWNTO 0) => rom2funct);
+														q(5 DOWNTO 0) => rom2funct
+													);
 														
 	U3	:	mipsControl						PORT MAP (	opcode => rom2op, 
-														funct => rom2funct );
+														funct => rom2funct,
+														RegDst =>,
+														ALUSrc =>,
+														Jump =>,
+														jal =>,
+														Jr =>,
+														Beq =>,
+														Bne =>,
+														MemRead =>,
+														MemWrite =>,
+														RegWrite =>,
+														MemtoReg =>,
+														ALUControl =>);
 
-	U4	:	mips_register_file								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
-														q(25 DOWNTO 21) => );
+	U4	:	mips_register_file				PORT MAP (	clock =>, 
+														reset =>,
+														RegWrite =>,
+														read_reg1 => rom2rr1,
+														read_reg2 => rom2rr2,
+														write_reg => rom2wr,		-- TODO: determine rt or rd
+														write_data =>,
+														read_data1 =>,
+														read_data2 =>);
 
 	U5	:	signExtImmediate				PORT MAP (	input => rom2imme, 
-														q(25 DOWNTO 21) => );
+														output => );
 
-	U6	:	mips_alu								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
-														shamt => rom2sh);
+	U6	:	mips_alu						PORT MAP (	ALUControl =>, 
+														inputA =>,
+														inputB =>,
+														shamt => rom2sh
+														Zero =>,
+														ALU_Result =>);
 	
-	U7	:	ram								PORT MAP (	q(31 DOWNTO 26) => rom2op, 
-														q(25 DOWNTO 21) => );
+	U7	:	ram								PORT MAP (	address =>, 
+														clock =>,
+														data =>,
+														wren =>,
+														q =>);
 														
 	END mips
 	
