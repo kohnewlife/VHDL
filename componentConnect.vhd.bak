@@ -29,6 +29,7 @@ ARCHITECTURE arc of componentconnect IS
 				SIGNAL memOutput				:	STD_LOGIC_VECTOR(31 downto 0);
 				SIGNAL PCplusFour				:	STD_LOGIC_VECTOR(31 downto 0);
 				SIGNAL JumpAddress1			:	STD_LOGIC_VECTOR(27 downto 0);
+				SIGNAL JumpAddress2			:	STD_LOGIC_VECTOR(31 downto 0);
 				SIGNAL MemReadOut				:	STD_LOGIC_VECTOR(31 downto 0);
 				SIGNAL ShiftedImmed			:	STD_LOGIC_VECTOR(31 downto 0);
 				SIGNAL BranchAddress			:	STD_LOGIC_VECTOR(31 downto 0);
@@ -123,14 +124,6 @@ ARCHITECTURE arc of componentconnect IS
 														write_data => writeData,
 														read_data1 => readData1,
 														read_data2 => readData2);
-														
-			--lab7 is our program counter
-		PC1: 		lab7 PORT MAP(		clk => slow_clock, 
-											reset => reset, 
-											INBUS => PC_in, 
-											OUTBUS => PCout);
---										PC_out <= PCout;
-
 		
 		ramsy: ram PORT MAP(address => --?????? pix later
 								clock => fast_clock,
@@ -147,7 +140,12 @@ ARCHITECTURE arc of componentconnect IS
 											Zero => AluZero,
 											ALU_Result => ALUResult);
 
-		
+		--lab7 is our program counter
+		PC1: 		lab7 PORT MAP(		clk => slow_clock, 
+											reset => reset, 
+											INBUS => PC_in, 
+											OUTBUS => PCout);
+--										PC_out <= PCout;	
 
 		signEXTy: signExtImmediate PORT MAP(input => instruction(15 downTO 0),
 														output => signExtended);
@@ -174,48 +172,27 @@ ARCHITECTURE arc of componentconnect IS
 										q => instruction);
 		
 		
-----------------------------begin muxes for all the jump type instructions----------------------------------
-PCplusFour <= pcout + "0100";	
-JumpAddress1 <= instruction(25 downTO 0);
-
-PROCESS(JumpAddress1, jumpSig, PCout)
-		CASE jumpSig is												 --jump
-			WHEN '1' =>
-				PCout <= jumpAddress1;
-			WHEN OTHERS =>
-				PCout <= PCout;
-		END CASE;
-END PROCESS;
---rj
-PROCESS(JumpAddress1, JALSig, WriteRegister)
-			CASE JALSig is
-				WHEN '1' => 
-						WriteRegisterafterJal <= "11111"; 			--write regist after jal is ra which is 31
-				WHEN others =>
-						WriteRegisterAfterJal <= "00000";			--if(0) {then its nothing}
-			END CASE;
-END PROCESS;
-
-PROCESS(JumpAddress1, JRsig, WriteRegister)						--jr 
-			CASE JRsig is
-				WHEN '1' =>													--not sure if instruction
-					WriteRegister <= instruction(25 downto 21); 	
-				WHEN OTHERS =>
-					WriteRegister <= instruction(20 downto 16);  --got to put it somewhere
-			END CASE;--hi
-END PROCESS;
-
 		
---------------------------------------------stuff for write reg----------------------------------------------		
-		PROCESS(instruction, RegDstSig, WriteRegister)
+	
+		PROCESS(instruction, RegDstSig, JALSig, WriteRegister)
 		BEGIN
-			CASE REGDstSig is -- reg dst for I type
+			CASE REGDstSig is
 				WHEN '0' =>
 					WriteRegister <= instruction(20 downto 16);
+				WHEN '1' =>
+					WriteRegister <= instruction(15 downTO 11);
 				When OTHERS =>
 					WriteRegister <= instruction(15 downto 11);
 			END CASE;
+			CASE JALSig is 
+				WHEN '0' =>
+					WriteRegisterAfterJal <= WriteRegister;
+				WHEN '1' => 
+					WriteRegisterAfterJal <= "11111";
+				When OthERS =>
+					WriteRegisterAfterJal <= WriteRegister;
+			
+			END CASE;
 		END PROCESS;
-		
-	
+
 		END ARC;
