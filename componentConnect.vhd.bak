@@ -186,7 +186,7 @@ PROCESS(JumpAddress1, jumpSig, PCout)
 				PCout <= PCout;
 		END CASE;
 END PROCESS;
---rj
+
 PROCESS(JumpAddress1, JALSig, WriteRegister)
 			CASE JALSig is
 				WHEN '1' => 
