@@ -7,7 +7,7 @@ USE IEEE.STD_LOGIC_UNSIGNED.all;
 Entity componentconnect IS
 	PORT( reset										:IN STD_LOGIC;
 			slow_clock, fast_clock				:IN STD_LOGIC;
-			PC_OUT,INSTRUCTION_OUT				:OUT STD_LOGIC;
+			PC_OUT,INSTRUCTION_OUT				:OUT STD_LOGIC_VECTOR(31 DownTO 0); --had to change 04.10.18 no vector before
 			Read_reg1_out, Read_reg2_out		:	OUT STD_LOGIC_VECTOR(4  DOWNTO 0);
 			Write_reg_out							:	OUT STD_LOGIC_VECTOR(4  DOWNTO 0);
 			Read_data1_out, Read_data2_out	:	OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -100,7 +100,7 @@ ARCHITECTURE arc of componentconnect IS
 														
 
 														
-		COMPONENT ram 						PORT (	address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
+		COMPONENT ram 						PORT (address						: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
 														clock							: IN STD_LOGIC  := '1';
 														data							: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 														wren							: IN STD_LOGIC ;
@@ -112,7 +112,11 @@ ARCHITECTURE arc of componentconnect IS
 														write_data					: IN	STD_LOGIC_VECTOR(31 DOWNTO 0);
 														read_data1, read_data2  : OUT	STD_LOGIC_VECTOR(31 DOWNTO 0) );
 														END COMPONENT;
-																		
+														
+														
+-------------------------------------port mapping all files------------------------------------------------------	
+
+																	
 		BEGIN	
 		mipsy: mips_register_file PORT MAP(clock => slow_clock,
 														reset => reset,
@@ -125,14 +129,15 @@ ARCHITECTURE arc of componentconnect IS
 														read_data2 => readData2);
 														
 			--lab7 is our program counter
-		PC1: 		lab7 PORT MAP(		clk => slow_clock, 
+		PC1: 		lab7 PORT MAP(		
+											clk => slow_clock, 
 											reset => reset, 
 											INBUS => PC_in, 
 											OUTBUS => PCout);
---										PC_out <= PCout;
+										PC_out <= PCout;
 
 		
-		ramsy: ram PORT MAP(address => --?????? pix later
+		ramsy: ram PORT MAP(address =>  instruction(11 downtO 0),  --?????? pix later
 								clock => fast_clock,
 								data => readData1,-- or it might be readdata2 ask
 								wren => MemWriteNew,
@@ -176,18 +181,20 @@ ARCHITECTURE arc of componentconnect IS
 		
 ----------------------------begin muxes for all the jump type instructions----------------------------------
 PCplusFour <= pcout + "0100";	
-JumpAddress1 <= instruction(25 downTO 0);
+JumpAddress1 <= instruction(25 downTO 0) & "00";
 
 PROCESS(JumpAddress1, jumpSig, PCout)
+	BEGIN
 		CASE jumpSig is												 --jump
 			WHEN '1' =>
-				PCout <= jumpAddress1;
+				PCout <= jumpAddress1 & "0000";				--concatenate bits ill check this later
 			WHEN OTHERS =>
 				PCout <= PCout;
 		END CASE;
 END PROCESS;
---rj
+
 PROCESS(JumpAddress1, JALSig, WriteRegister)
+		BEGIN
 			CASE JALSig is
 				WHEN '1' => 
 						WriteRegisterafterJal <= "11111"; 			--write regist after jal is ra which is 31
@@ -197,12 +204,13 @@ PROCESS(JumpAddress1, JALSig, WriteRegister)
 END PROCESS;
 
 PROCESS(JumpAddress1, JRsig, WriteRegister)						--jr 
+	BEGIN
 			CASE JRsig is
 				WHEN '1' =>													--not sure if instruction
 					WriteRegister <= instruction(25 downto 21); 	
 				WHEN OTHERS =>
 					WriteRegister <= instruction(20 downto 16);  --got to put it somewhere
-			END CASE;--hi
+			END CASE;
 END PROCESS;
 
 		
